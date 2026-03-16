@@ -96,11 +96,10 @@ export default function PantryHub() {
       alert("No items are currently marked for 'REORDER'.");
       return;
     }
-    // Open a new tab for each item using Instacart's search URL format
-    reorderItems.forEach(item => {
-      const url = `https://www.instacart.com/store/s?k=${encodeURIComponent(item.name)}`;
-      window.open(url, '_blank');
-    });
+    // Open a single tab bundling all REORDER items into one search query
+    const searchQuery = reorderItems.map(item => item.name).join(', ');
+    const url = `https://www.instacart.com/store/s?k=${encodeURIComponent(searchQuery)}`;
+    window.open(url, '_blank');
   };
 
   // Sort logic: 'REORDER' status first, then alphabetically
