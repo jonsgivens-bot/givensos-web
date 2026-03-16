@@ -4,7 +4,10 @@ import { JWT } from 'google-auth-library';
 
 export async function GET(req: Request) {
   try {
-    if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY) {
+    if (
+      !process.env.GOOGLE_SERVICE_ACCOUNT_JSON &&
+      (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY)
+    ) {
       // Mock data for UI development
       return NextResponse.json({
         chores: [
@@ -16,11 +19,21 @@ export async function GET(req: Request) {
       });
     }
 
-    const serviceAccountAuth = new JWT({
-      email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-    });
+    let serviceAccountAuth;
+    if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+      const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+      serviceAccountAuth = new JWT({
+        email: credentials.client_email,
+        key: credentials.private_key,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+      });
+    } else {
+      serviceAccountAuth = new JWT({
+        email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        key: process.env.GOOGLE_PRIVATE_KEY!.replace(/\\n/g, '\n'),
+        scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+      });
+    }
 
     const doc = new GoogleSpreadsheet('1X04WuSQTN5aSQY-WTHTYNWRznU73964yCDz0-vsOcp4', serviceAccountAuth);
     await doc.loadInfo();
@@ -33,8 +46,8 @@ export async function GET(req: Request) {
     await choreSheet.loadHeaderRow();
     const rows = await choreSheet.getRows();
 
-    // Get current day of week (e.g., "Monday")
-    const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+    // Get current day of week (e.g., "Monday") locked to central time
+    const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long', timeZone: 'America/Chicago' });
 
     const chores = rows.map((r, index) => {
       const frequency = r.get('Frequency') || '';
@@ -56,6 +69,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ chores });
   } catch (error: any) {
     console.error("Failed to fetch chores", error);
-    return NextResponse.json({ error: "Failed to fetch chores" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch chores", details: error.message }, { status: 500 });
   }
 }

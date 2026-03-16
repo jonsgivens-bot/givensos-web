@@ -5,7 +5,10 @@ import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
 
 export async function GET(req: Request) {
-  if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY) {
+  if (
+    !process.env.GOOGLE_SERVICE_ACCOUNT_JSON &&
+    (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY)
+  ) {
     const today = new Date();
     const tomorrow = addDays(today, 1);
     
@@ -39,14 +42,27 @@ export async function GET(req: Request) {
   }
 
   try {
-    const auth = new JWT({
-      email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      scopes: [
-        'https://www.googleapis.com/auth/spreadsheets.readonly',
-        'https://www.googleapis.com/auth/calendar.readonly'
-      ],
-    });
+    let auth;
+    if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+      const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+      auth = new JWT({
+        email: credentials.client_email,
+        key: credentials.private_key,
+        scopes: [
+          'https://www.googleapis.com/auth/spreadsheets.readonly',
+          'https://www.googleapis.com/auth/calendar.readonly'
+        ],
+      });
+    } else {
+      auth = new JWT({
+        email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        key: process.env.GOOGLE_PRIVATE_KEY!.replace(/\\n/g, '\n'),
+        scopes: [
+          'https://www.googleapis.com/auth/spreadsheets.readonly',
+          'https://www.googleapis.com/auth/calendar.readonly'
+        ],
+      });
+    }
 
     // 1. Fetch settings from Google Sheets
     const doc = new GoogleSpreadsheet('1X04WuSQTN5aSQY-WTHTYNWRznU73964yCDz0-vsOcp4', auth);
@@ -59,7 +75,7 @@ export async function GET(req: Request) {
       const rows = await sheet.getRows();
       calendarConfigs = rows.map(r => ({
         calendarId: r.get('Calendar ID') || '',
-        childName: r.get('Child Name') || 'Family',
+        childName: r.get('Calendar Name') || 'Family',
         colorAccent: r.get('Color Accent') || '#4F6F52',
       })).filter(c => c.calendarId !== '');
     }

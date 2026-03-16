@@ -13,6 +13,7 @@ export default function Home() {
   const [events, setEvents] = useState<any[]>([]);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [chores, setChores] = useState<any[]>([]);
+  const [choresError, setChoresError] = useState<string | null>(null);
   const [selectedChildFilter, setSelectedChildFilter] = useState<string | null>("All");
   
   // Static Monday Forecast
@@ -64,9 +65,22 @@ export default function Home() {
 
     // Fetch Chores
     fetch("/api/chores")
-      .then((res) => res.json())
-      .then((data) => setChores(data.chores || []))
-      .catch(() => setChores([]));
+      .then((res) => {
+        if (!res.ok) {
+           return res.json().then(errData => {
+              throw new Error(errData.error + (errData.details ? `: ${errData.details}` : '') || `HTTP error! status: ${res.status}`);
+           });
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setChores(data.chores || []);
+        setChoresError(null);
+      })
+      .catch((err) => {
+        setChores([]);
+        setChoresError(err.message);
+      });
   }, []);
 
   const handleChoreComplete = async (name: string, rowNumber: number, chorePoints: number) => {
@@ -182,7 +196,13 @@ export default function Home() {
                       {name}'s Daily Chores
                     </span>
                     
-                    {kidChores.length === 0 ? (
+                    
+                    {choresError ? (
+                      <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded flex flex-col gap-1 mt-2">
+                         <span className="text-xs font-bold uppercase tracking-wider">Loading Error</span>
+                         <span className="text-xs">{choresError}</span>
+                      </div>
+                    ) : kidChores.length === 0 ? (
                       <p className="text-sm opacity-60 italic mt-2">No chores scheduled for today.</p>
                     ) : (
                       <div className="space-y-2 mt-2">
