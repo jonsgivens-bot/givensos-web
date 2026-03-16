@@ -25,7 +25,7 @@ export async function GET() {
 
     // Fetch Weekly Plan
     const mealSheet = doc.sheetsByTitle['Weekly_Meal_Planner'];
-    let weeklyMeals = [];
+    let weeklyMeals: {day: string, selectedMeal: string}[] = [];
     if (mealSheet) {
       await mealSheet.loadHeaderRow();
       const rows = await mealSheet.getRows();
