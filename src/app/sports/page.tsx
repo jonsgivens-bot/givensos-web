@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Lock, Calendar as CalendarIcon, MapPin, AlertTriangle } from "lucide-react";
+import { Lock, Calendar as CalendarIcon, MapPin, AlertTriangle, Users } from "lucide-react";
 import { startOfDay, endOfDay } from "date-fns";
 
 export interface CalendarEvent {
@@ -23,6 +23,7 @@ export default function SportsPortal() {
   const [error, setError] = useState("");
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedChildFilter, setSelectedChildFilter] = useState<string | null>("All");
 
   useEffect(() => {
     // Check local storage for session
@@ -131,103 +132,183 @@ export default function SportsPortal() {
     );
   }
 
+  const uniqueChildrenFilters = ["All", ...Array.from(new Set(events.map(e => e.childName).filter((name): name is string => Boolean(name))))];
+  const filteredEvents = selectedChildFilter === "All" || !selectedChildFilter 
+     ? events 
+     : events.filter(e => e.childName === selectedChildFilter);
+
   // Filter into Today and Coming Up
   const todayStart = startOfDay(new Date()).getTime();
   const todayEnd = endOfDay(new Date()).getTime();
   
-  const todayEvents = events.filter(e => {
+  const todayEvents = filteredEvents.filter(e => {
     const time = new Date(e.rawDate).getTime();
     return time >= todayStart && time <= todayEnd;
   });
   
-  const comingUpEvents = events.filter(e => {
+  const comingUpEvents = filteredEvents.filter(e => {
     const time = new Date(e.rawDate).getTime();
     return time > todayEnd;
   });
 
   return (
-    <main className="p-8 max-w-4xl mx-auto">
-      <header className="flex justify-between items-center mb-10 pb-6 border-b border-[#E9E4D9]">
-        <h1 className="text-3xl font-light tracking-tight text-[#4F6F52] flex items-center gap-3">
-          <CalendarIcon className="text-[#4F6F52]" /> Full Sports Schedule
-        </h1>
-        <button 
-          onClick={() => { localStorage.removeItem("sports_auth"); setIsAuthenticated(false); }}
-          className="text-sm opacity-60 hover:opacity-100 hover:text-[#4F6F52] transition-colors"
-        >
-          Sign Out
-        </button>
-      </header>
-
-      {loading ? (
-        <p className="text-center opacity-60 py-10">Loading schedules from Google Calendar...</p>
-      ) : events.length === 0 ? (
-        <p className="text-center opacity-60 py-10">No upcoming games found.</p>
-      ) : (
-        <div className="space-y-12">
-           {todayEvents.length > 0 && (
-              <section>
-                 <h2 className="text-2xl font-medium mb-4 pb-2 border-b-2 border-[#4F6F52] inline-block text-[#4F6F52]">Today</h2>
-                 <div className="grid gap-4">
-                   {todayEvents.map((evt, i) => (
-                      <EventCard key={`today-${i}`} evt={evt} />
-                   ))}
-                 </div>
-              </section>
-           )}
-           
-           {comingUpEvents.length > 0 && (
-              <section>
-                 <h2 className="text-2xl font-light mb-4 pb-2 border-b border-[#E9E4D9]">Coming Up</h2>
-                 <div className="grid gap-4">
-                   {comingUpEvents.map((evt, i) => (
-                      <EventCard key={`upcoming-${i}`} evt={evt} />
-                   ))}
-                 </div>
-              </section>
-           )}
+    <main className="min-h-screen bg-[#FDFBF7] text-[#2C3333]">
+      {/* Premium Header */}
+      <div className="bg-[#4F6F52] text-[#FDFBF7] pt-12 pb-20 px-8 relative overflow-hidden flex justify-between items-start">
+        <div className="absolute top-0 right-0 p-12 opacity-10">
+           <CalendarIcon size={200} />
         </div>
-      )}
+        <div className="max-w-4xl mx-auto flex flex-col gap-2 relative z-10 w-full">
+           <div className="flex items-center justify-between w-full">
+             <div className="flex items-center gap-3 text-[#E9E4D9] mb-4">
+                <Users size={20} />
+                <span className="text-sm font-semibold uppercase tracking-widest">Givens Family</span>
+             </div>
+             <button 
+               onClick={() => { localStorage.removeItem("sports_auth"); setIsAuthenticated(false); }}
+               className="px-4 py-2 rounded-full text-sm font-medium bg-white/20 hover:bg-white/30 transition-colors"
+             >
+               Sign Out <Lock size={12} className="inline ml-1" />
+             </button>
+           </div>
+           <h1 className="text-4xl md:text-5xl font-light tracking-tight">Master Sports Schedule</h1>
+           <p className="text-lg opacity-80 max-w-xl font-light">Your complete internal view of all practices, games, and events.</p>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-8 -mt-10 relative z-20 pb-20">
+        <div className="bg-white/90 backdrop-blur-xl border border-[#E9E4D9] rounded-3xl p-6 md:p-10 shadow-xl">
+          
+          <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-[#E9E4D9] pb-6">
+            <h2 className="text-2xl font-light text-[#4F6F52] flex items-center gap-3">
+              <CalendarIcon className="text-[#4F6F52]" /> Active Schedules
+            </h2>
+            
+            {uniqueChildrenFilters.length > 1 && (
+              <div className="flex flex-wrap gap-2">
+                 {uniqueChildrenFilters.map(child => (
+                    <button
+                      key={child}
+                      onClick={() => setSelectedChildFilter(child as string)}
+                      className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all duration-300 ${
+                        selectedChildFilter === child 
+                        ? 'bg-[#4F6F52] text-[#FDFBF7] border-[#4F6F52] shadow-md scale-105' 
+                        : 'bg-[#F8F6F1] text-[#2C3333] border-[#E9E4D9] hover:bg-[#E9E4D9]'
+                      }`}
+                    >
+                      {child}
+                    </button>
+                 ))}
+              </div>
+            )}
+          </header>
+
+          {loading ? (
+            <div className="py-20 flex flex-col items-center justify-center gap-4 text-[#4F6F52] opacity-60">
+              <div className="w-8 h-8 rounded-full border-4 border-current border-t-transparent animate-spin"></div>
+              <p className="font-medium animate-pulse">Loading schedules from Google...</p>
+            </div>
+          ) : filteredEvents.length === 0 ? (
+            <div className="text-center py-20 px-4 bg-[#F8F6F1] rounded-2xl border border-dashed border-[#E9E4D9]">
+               <CalendarIcon size={48} className="mx-auto text-[#4F6F52] opacity-30 mb-4" />
+               <p className="text-xl font-light text-[#2C3333]">No upcoming events right now.</p>
+               <p className="text-sm opacity-60 mt-2">Check back later or adjust your filters above.</p>
+            </div>
+          ) : (
+            <div className="space-y-12">
+               {todayEvents.length > 0 && (
+                  <section>
+                     <h3 className="text-xl font-medium mb-5 flex items-center gap-3 text-[#4F6F52]">
+                       <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                       Playing Today
+                     </h3>
+                     <div className="grid gap-4">
+                       {todayEvents.map((evt, i) => (
+                          <GameCard key={`today-${i}`} evt={evt} isToday={true} />
+                       ))}
+                     </div>
+                  </section>
+               )}
+               
+               {comingUpEvents.length > 0 && (
+                  <section>
+                     <h3 className="text-xl font-light mb-5 text-[#2C3333] border-b border-[#E9E4D9] pb-2 inline-block">
+                       Coming Up
+                     </h3>
+                     <div className="grid gap-4">
+                       {comingUpEvents.map((evt, i) => (
+                          <GameCard key={`upcoming-${i}`} evt={evt} isToday={false} />
+                       ))}
+                     </div>
+                  </section>
+               )}
+            </div>
+          )}
+        </div>
+      </div>
     </main>
   );
 }
 
-function EventCard({ evt }: { evt: CalendarEvent }) {
+function GameCard({ evt, isToday }: { evt: CalendarEvent, isToday: boolean }) {
   const mapLink = evt.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(evt.location)}` : null;
 
   return (
-    <div className={`bg-white/70 backdrop-blur-sm p-6 rounded-2xl border ${evt.isConflict ? 'border-[#EAD196] shadow-sm bg-[#FCF8EC]/50' : 'border-[#E9E4D9]'} flex flex-col md:flex-row justify-between items-start gap-4 hover:shadow-md transition-all relative overflow-hidden`}>
+    <div className={`p-6 rounded-2xl border transition-all group hover:shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-6 overflow-hidden relative ${
+      isToday ? 'bg-gradient-to-r from-[#FDFBF7] to-[#F8F6F1] border-[#E9E4D9] shadow-sm' : 'bg-white border-[#E9E4D9] hover:border-[#4F6F52]'
+    } ${evt.isConflict ? 'border-[#EAD196] bg-[#FCF8EC]/30 hover:border-[#EAD196]' : ''}`}>
+      
       {/* Decorative side border for conflict */}
       {evt.isConflict && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#EAD196]"></div>}
       
-      <div className="flex-1">
-        <div className="flex items-center gap-3 mb-1">
-          <h3 className="font-medium text-lg text-[#2C3333]">{evt.title}</h3>
-          {evt.isConflict && (
-            <span className="flex items-center gap-1 text-xs font-semibold bg-[#EAD196] text-[#A68121] px-2 py-0.5 rounded-full">
-              <AlertTriangle size={12} /> Double Booked
-            </span>
-          )}
-        </div>
-        
-        <div className="flex flex-col gap-1 mt-2">
-           <div className="flex items-center gap-2">
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#F8F6F1] border border-[#E9E4D9]" style={{ color: evt.colorAccent || '#4F6F52' }}>
-                 {evt.childName || evt.calendar}
-              </span>
-              <span className="text-sm opacity-60">{evt.calendar}</span>
-           </div>
-           
-           {mapLink && (
-             <a href={mapLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm text-[#4F6F52] hover:underline mt-1 w-fit">
-                <MapPin size={14} /> {evt.location}
-             </a>
+      {/* Time block */}
+      <div className={`flex flex-col items-center justify-center p-4 rounded-xl min-w-[120px] transition-colors ${
+        evt.isConflict ? 'bg-[#EAD196] text-[#A68121]' :
+        isToday ? 'bg-[#4F6F52] text-[#FDFBF7]' : 'bg-[#F8F6F1] text-[#2C3333] group-hover:bg-[#E9E4D9]'
+      }`}>
+         <span className={`text-xs uppercase font-medium tracking-wide ${isToday && !evt.isConflict ? 'opacity-80' : 'opacity-100'}`}>
+           {evt.date.split(' ')[0]}
+         </span>
+         <span className="text-2xl font-light">
+           {evt.date.split(' ')[1]?.replace(',', '') || evt.date}
+         </span>
+         <span className={`text-sm mt-1 font-medium ${isToday && !evt.isConflict ? 'opacity-90' : 'opacity-80'}`}>
+           {evt.time}
+         </span>
+      </div>
+
+      {/* Details */}
+      <div className="flex-1 space-y-3 w-full">
+        <div className="flex items-center gap-3 flex-wrap">
+           <h4 className="font-medium text-xl text-[#2C3333] leading-tight">{evt.title}</h4>
+           {evt.isConflict && (
+             <span className="flex items-center gap-1 text-xs font-bold bg-[#FDEDBF] text-[#9D7614] px-2.5 py-1 rounded-md border border-[#F2DEAA] shadow-sm">
+               <AlertTriangle size={14} /> DOUBLE BOOKED
+             </span>
            )}
         </div>
-      </div>
-      <div className="text-right bg-[#FDFBF7] px-5 py-3 rounded-xl border border-[#E9E4D9] min-w-[140px] shadow-sm">
-        <p className="font-medium text-[#4F6F52] text-lg">{evt.date}</p>
-        <p className="text-sm opacity-80">{evt.time}</p>
+        
+        <div className="flex flex-wrap gap-3 items-center">
+           <div className="flex items-center gap-2 bg-[#F8F6F1] px-3 py-1.5 rounded-lg border border-[#E9E4D9] shadow-sm">
+              {evt.colorAccent && (
+                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: evt.colorAccent }}></div>
+              )}
+              <span className="text-sm font-medium" style={{ color: evt.colorAccent || '#4F6F52' }}>
+                 {evt.childName || evt.calendar}
+              </span>
+           </div>
+        </div>
+        
+        {mapLink && (
+          <a 
+            href={mapLink} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="inline-flex items-center gap-1.5 text-sm text-[#4F6F52] hover:text-[#506e53] font-medium bg-[#4F6F52]/5 px-3 py-1.5 rounded-lg transition-colors hover:bg-[#4F6F52]/10"
+          >
+             <MapPin size={16} /> Get Directions
+          </a>
+        )}
       </div>
     </div>
   );
