@@ -2,13 +2,26 @@
 
 import { useState, useEffect } from "react";
 import { Lock, Calendar as CalendarIcon, MapPin, AlertTriangle } from "lucide-react";
-import { isBefore, isAfter, startOfDay, endOfDay, parseISO } from "date-fns";
+import { startOfDay, endOfDay } from "date-fns";
+
+export interface CalendarEvent {
+  title: string;
+  calendar: string;
+  childName: string;
+  colorAccent: string;
+  date: string;
+  time: string;
+  rawDate: string;
+  endTime: string | null;
+  location: string | null;
+  isConflict?: boolean;
+}
 
 export default function SportsPortal() {
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState("");
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -47,7 +60,7 @@ export default function SportsPortal() {
         }
       }
       
-      const eventsWithConflicts = fetchedEvents.map((evt: any, i: number) => ({
+      const eventsWithConflicts = fetchedEvents.map((evt: Record<string, unknown>, i: number) => ({
         ...evt,
         isConflict: conflicts.has(i)
       }));
@@ -79,7 +92,7 @@ export default function SportsPortal() {
       } else {
         setError("Incorrect password");
       }
-    } catch (e) {
+    } catch {
       setError("An error occurred");
     } finally {
       setLoading(false);
@@ -179,7 +192,7 @@ export default function SportsPortal() {
   );
 }
 
-function EventCard({ evt }: { evt: any }) {
+function EventCard({ evt }: { evt: CalendarEvent }) {
   const mapLink = evt.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(evt.location)}` : null;
 
   return (

@@ -193,7 +193,7 @@ export default function Home() {
                     className="p-6 rounded-2xl border border-[#E9E4D9] bg-[#F8F6F1] hover:shadow-md transition-all flex flex-col gap-3"
                   >
                     <span className="block text-[10px] uppercase opacity-60 text-[#4F6F52] tracking-widest font-bold">
-                      {name}'s Daily Chores
+                      {name}&apos;s Daily Chores
                     </span>
                     
                     
@@ -411,7 +411,7 @@ export default function Home() {
                       onClick={triggerMorningFlash}
                       className="w-full mb-3 px-5 py-3 rounded-xl text-sm font-medium bg-[#4F6F52] text-[#FDFBF7] hover:bg-[#3e5a41] transition-colors shadow-sm"
                     >
-                      Trigger 'Morning Flash' Test
+                      Trigger &apos;Morning Flash&apos; Test
                     </button>
                     <a 
                       href="#" 

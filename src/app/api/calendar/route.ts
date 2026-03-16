@@ -64,6 +64,12 @@ export async function GET(req: Request) {
       });
     }
 
+    // Extract search params for Fan Portal features
+    const url = new URL(req.url);
+    const publicOnly = url.searchParams.get('publicOnly') === 'true';
+    const daysParam = url.searchParams.get('days');
+    const daysToLookAhead = daysParam ? parseInt(daysParam, 10) : 14;
+
     // 1. Fetch settings from Google Sheets
     const doc = new GoogleSpreadsheet('1X04WuSQTN5aSQY-WTHTYNWRznU73964yCDz0-vsOcp4', auth);
     await doc.loadInfo();
@@ -77,7 +83,12 @@ export async function GET(req: Request) {
         calendarId: r.get('Calendar ID') || '',
         childName: r.get('Calendar Name') || 'Family',
         colorAccent: r.get('Color Accent') || '#4F6F52',
+        publicView: r.get('Public View?') || 'No', // capture public view flag
       })).filter(c => c.calendarId !== '');
+    }
+
+    if (publicOnly) {
+      calendarConfigs = calendarConfigs.filter(c => c.publicView?.toLowerCase() === 'yes');
     }
 
     if (calendarConfigs.length === 0) {
@@ -87,7 +98,7 @@ export async function GET(req: Request) {
     // 2. Fetch events from Google Calendar
     const calendar = google.calendar({ version: 'v3', auth });
     const timeMin = new Date();
-    const timeMax = addDays(timeMin, 14); // Next 14 days
+    const timeMax = addDays(timeMin, daysToLookAhead); // Dynamic days
 
     const allEvents = [];
 
@@ -106,11 +117,18 @@ export async function GET(req: Request) {
         for (const event of events) {
            const start = event.start?.dateTime || event.start?.date;
            if (!start) continue;
+
+           const title = event.summary || 'Busy';
+           
+           // If we are looking for public fan portal events, ONLY show games
+           if (publicOnly && !title.toLowerCase().includes('game')) {
+             continue;
+           }
            
            const dateObj = new Date(start);
            
            allEvents.push({
-             title: event.summary || 'Busy',
+             title: title,
              calendar: config.calendarId, // Note: the user asked for name, but we only have ID in sheets. We might use Child Name for display.
              childName: config.childName,
              colorAccent: config.colorAccent,
