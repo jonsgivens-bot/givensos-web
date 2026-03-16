@@ -123,31 +123,29 @@ export async function GET(req: Request) {
 
         const events = response.data.items || [];
         for (const event of events) {
+           const isAllDay = !event.start?.dateTime;
            const start = event.start?.dateTime || event.start?.date;
            if (!start) continue;
 
-           const title = event.summary || 'Busy';
-           const dateObj = new Date(start);
+           // Use local noon for all-day events to prevent timezone boundary shifting
+           const dateStr = isAllDay ? `${start}T12:00:00-05:00` : start;
+           const dateObj = new Date(dateStr);
            
            // Deduplication Logic
-           // Create a standardized key: e.g., "championship game vs tigers-2026-03-22"
-           const formattedDateForDedupe = format(dateObj, 'yyyy-MM-dd');
-           const standardizedTitle = title.toLowerCase().trim();
+           const formattedDateForDedupe = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Chicago' }).format(dateObj);
+           const standardizedTitle = (event.summary || 'Busy').toLowerCase().trim();
            const uniqueKey = `${standardizedTitle}-${formattedDateForDedupe}`;
            
-           if (seenEventKeys.has(uniqueKey)) {
-             // We already added this exact game from another calendar (e.g., both siblings play on same team)
-             continue;
-           }
+           if (seenEventKeys.has(uniqueKey)) continue;
            seenEventKeys.add(uniqueKey);
            
            allEvents.push({
-             title: title,
-             calendar: config.calendarId, // Note: the user asked for name, but we only have ID in sheets. We might use Child Name for display.
+             title: event.summary || 'Busy',
+             calendar: config.calendarId,
              childName: config.childName,
              colorAccent: config.colorAccent,
-             date: format(dateObj, 'MMM d, yyyy'),
-             time: event.start?.dateTime ? format(dateObj, 'h:mm a') : 'All Day',
+             date: dateObj.toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', year: 'numeric' }),
+             time: isAllDay ? 'All Day' : dateObj.toLocaleString('en-US', { timeZone: 'America/Chicago', hour: 'numeric', minute: '2-digit', hour12: true }),
              rawDate: dateObj.toISOString(),
              endTime: event.end?.dateTime ? new Date(event.end.dateTime).toISOString() : null,
              location: event.location || null
