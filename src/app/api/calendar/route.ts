@@ -126,7 +126,8 @@ export async function GET(req: Request) {
            const title = event.summary || 'Busy';
            
            // If we are looking for public fan portal events, ONLY show games
-           if (publicOnly && !title.toLowerCase().includes('game')) {
+           // Many public matches use ' vs ' instead of explicitly saying 'game' (e.g., Vetta Sports)
+           if (publicOnly && !title.toLowerCase().includes('game') && !title.toLowerCase().includes(' vs ')) {
              continue;
            }
            
