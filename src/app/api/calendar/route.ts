@@ -101,17 +101,22 @@ export async function GET(req: Request) {
     const timeMax = addDays(timeMin, daysToLookAhead); // Dynamic days
 
     const allEvents = [];
+    const seenEventKeys = new Set<string>();
 
     for (const config of calendarConfigs) {
       try {
+        console.log(`[Calendar API] Authenticating and fetching calendar... Name: '${config.childName}', ID: '${config.calendarId}'`);
+        
         const response = await calendar.events.list({
           calendarId: config.calendarId,
           timeMin: timeMin.toISOString(),
           timeMax: timeMax.toISOString(),
-          maxResults: 20,
+          maxResults: 250, // Increased from 20 to prevent artificial truncation of games
           singleEvents: true,
           orderBy: 'startTime',
         });
+
+        console.log(`[Calendar API] ✅ SUCCESS: Retrieved ${response.data.items?.length || 0} events for '${config.childName}'`);
 
         const events = response.data.items || [];
         for (const event of events) {
@@ -127,6 +132,18 @@ export async function GET(req: Request) {
            
            const dateObj = new Date(start);
            
+           // Deduplication Logic
+           // Create a standardized key: e.g., "championship game vs tigers-2026-03-22"
+           const formattedDateForDedupe = format(dateObj, 'yyyy-MM-dd');
+           const standardizedTitle = title.toLowerCase().trim();
+           const uniqueKey = `${standardizedTitle}-${formattedDateForDedupe}`;
+           
+           if (seenEventKeys.has(uniqueKey)) {
+             // We already added this exact game from another calendar (e.g., both siblings play on same team)
+             continue;
+           }
+           seenEventKeys.add(uniqueKey);
+           
            allEvents.push({
              title: title,
              calendar: config.calendarId, // Note: the user asked for name, but we only have ID in sheets. We might use Child Name for display.
@@ -139,8 +156,9 @@ export async function GET(req: Request) {
              location: event.location || null
            });
         }
-      } catch (calErr) {
-        console.error(`Failed to fetch calendar: ${config.calendarId}`, calErr);
+      } catch (calErr: unknown) {
+        const errorMessage = calErr instanceof Error ? calErr.message : "Unknown Error";
+        console.error(`[Calendar API] ❌ FAILED: Could not access calendar '${config.childName}' (ID: ${config.calendarId}). Reason: ${errorMessage}`);
       }
     }
 
