@@ -83,12 +83,15 @@ export async function GET(req: Request) {
         calendarId: r.get('Calendar ID') || '',
         childName: r.get('Calendar Name') || 'Family',
         colorAccent: r.get('Color Accent') || '#4F6F52',
+        internalView: r.get('Internal View?') || 'No', // capture internal view flag
         publicView: r.get('Public View?') || 'No', // capture public view flag
       })).filter(c => c.calendarId !== '');
     }
 
     if (publicOnly) {
       calendarConfigs = calendarConfigs.filter(c => c.publicView?.toLowerCase() === 'yes');
+    } else {
+      calendarConfigs = calendarConfigs.filter(c => c.internalView?.toLowerCase() === 'yes');
     }
 
     if (calendarConfigs.length === 0) {
@@ -124,13 +127,6 @@ export async function GET(req: Request) {
            if (!start) continue;
 
            const title = event.summary || 'Busy';
-           
-           // If we are looking for public fan portal events, ONLY show games
-           // Many public matches use ' vs ' instead of explicitly saying 'game' (e.g., Vetta Sports)
-           if (publicOnly && !title.toLowerCase().includes('game') && !title.toLowerCase().includes(' vs ')) {
-             continue;
-           }
-           
            const dateObj = new Date(start);
            
            // Deduplication Logic
