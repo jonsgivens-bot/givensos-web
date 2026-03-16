@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Minus, Search, ShoppingBag, Package, Carrot } from "lucide-react";
+import { Plus, Minus, Search, ShoppingBag, Package, Carrot, Utensils, Calendar as CalendarIcon } from "lucide-react";
 
 interface InventoryItem {
   name: string;
@@ -143,7 +143,30 @@ export default function PantryHub() {
       {loading ? (
         <div className="text-center opacity-60 py-20">Syncing with Google Sheets Pantry...</div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="flex flex-col gap-8">
+          
+          {/* Highlighted Meal Planner Banner */}
+          <div className="bg-[#4F6F52] rounded-3xl p-6 md:p-8 text-[#FDFBF7] shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+            <div className="absolute -right-4 -bottom-10 opacity-10 pointer-events-none">
+              <Utensils size={180} />
+            </div>
+            <div className="relative z-10 flex flex-col gap-2">
+              <h2 className="text-2xl font-light flex items-center gap-3">
+                <CalendarIcon /> Weekly Meal Planner
+              </h2>
+              <p className="opacity-90 max-w-xl text-sm font-light leading-relaxed">
+                Connect your Recipe Library directly to this Pantry Hub. Plan out your meals for the week, and we'll automatically add any short ingredients directly to your Shopping List.
+              </p>
+            </div>
+            <a 
+              href="/meals" 
+              className="relative z-10 flex-shrink-0 whitespace-nowrap px-8 py-3.5 rounded-2xl bg-[#FDFBF7] text-[#4F6F52] hover:bg-[#E9E4D9] font-medium transition-transform hover:scale-105 active:scale-95 shadow-lg"
+            >
+              Plan Meals Now &rarr;
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Main Pantry section - 2 columns wide */}
           <div className="lg:col-span-2 space-y-6">
@@ -185,6 +208,7 @@ export default function PantryHub() {
               </div>
             )}
           </div>
+        </div>
         </div>
       )}
 
