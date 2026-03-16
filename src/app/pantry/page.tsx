@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Minus, Search, ShoppingBag, Package, Carrot, Utensils, Calendar as CalendarIcon } from "lucide-react";
+import Link from "next/link"; // Added Link import
+import { Plus, Minus, Search, ShoppingBag, Package, Carrot, Utensils, Calendar as CalendarIcon, Home } from "lucide-react"; // Added Home import
 
 interface InventoryItem {
   name: string;
@@ -122,9 +123,9 @@ export default function PantryHub() {
           <p className="text-sm opacity-60 mt-1">Manage kitchen inventory and automated shopping lists.</p>
         </div>
         <div className="flex gap-4">
-          <a href="/" className="px-5 py-2 rounded-full text-sm font-medium border border-[#E9E4D9] text-[#2C3333] hover:bg-[#F8F6F1] transition-colors shadow-sm">
-            Back to Dashboard
-          </a>
+          <Link href="/" className="px-5 py-2 rounded-full text-sm font-medium border border-[#E9E4D9] text-[#2C3333] hover:bg-[#F8F6F1] transition-colors shadow-sm">
+            <Home size={16} className="inline-block mr-1" /> Back to Dashboard
+          </Link>
           <button 
             onClick={handleInstacartOrder}
             className="flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium border border-[#4F6F52] text-[#4F6F52] hover:bg-[#F8F6F1] transition-colors shadow-sm"

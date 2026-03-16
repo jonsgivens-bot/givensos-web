@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     }
 
     // 3. INVENTORY SYNC: Cross-reference and set REORDER
-    let reorderedItems: string[] = [];
+    const reorderedItems: string[] = [];
     if (requiredIngredientsStr.size > 0) {
        const inventorySheet = doc.sheetsByTitle['Inventory'];
        if (inventorySheet) {

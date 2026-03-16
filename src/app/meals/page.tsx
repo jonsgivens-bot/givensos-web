@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Utensils, Calendar as CalendarIcon, Save, ChefHat } from "lucide-react";
+import Link from "next/link";
 
 export default function MealPlanner() {
   const [weeklyPlan, setWeeklyPlan] = useState<{ day: string, selectedMeal: string }[]>([]);
@@ -169,9 +170,9 @@ export default function MealPlanner() {
                    ))}
                 </div>
                 <div className="mt-4 pt-4 border-t border-[#F2D6D3]/50">
-                   <a href="/pantry" className="text-sm font-semibold text-[#A44236] hover:underline flex items-center gap-1 w-fit">
+                   <Link href="/pantry" className="text-sm font-semibold text-[#A44236] hover:underline flex items-center gap-1 w-fit">
                       View full shopping list &rarr;
-                   </a>
+                   </Link>
                 </div>
              </div>
           )}

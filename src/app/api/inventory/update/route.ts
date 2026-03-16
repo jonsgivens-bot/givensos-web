@@ -45,7 +45,7 @@ export async function POST(req: Request) {
 
     if (action === 'update' && itemRow) {
       // Adjust existing 
-      let currentQty = parseInt(itemRow.get('Current Qty') || '0', 10);
+      const currentQty = parseInt(itemRow.get('Current Qty') || '0', 10);
       let newQty = currentQty + (increment || 0);
       if (newQty < 0) newQty = 0;
       

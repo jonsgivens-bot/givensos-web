@@ -37,7 +37,7 @@ export async function GET() {
 
     // Fetch Recipe Library to get all available meals
     const recipeSheet = doc.sheetsByTitle['Recipe_Library'];
-    let availableMeals = new Set<string>();
+    const availableMeals = new Set<string>();
     if (recipeSheet) {
       await recipeSheet.loadHeaderRow();
       const rows = await recipeSheet.getRows();
