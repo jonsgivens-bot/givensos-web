@@ -5,10 +5,11 @@ import type { NextRequest } from 'next/server';
 export function proxy(request: NextRequest) {
   const familyAuth = request.cookies.get('family_auth')?.value;
   const isLoginPage = request.nextUrl.pathname.startsWith('/login');
+  const isFansPage = request.nextUrl.pathname.startsWith('/fans'); // NEW: allow public access
 
   // Allow unrestricted access to the API routes explicitly meant to run in the background if we needed them 
   // (e.g., cron jobs, etc - though we'll protect basic routes)
-  if (!familyAuth && !isLoginPage) {
+  if (!familyAuth && !isLoginPage && !isFansPage) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
